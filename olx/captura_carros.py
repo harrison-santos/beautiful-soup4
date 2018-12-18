@@ -15,7 +15,7 @@ def remover_acentos(txt):
 
 
 #CONF
-
+termos_opcionais = ['air_bag', 'alarme', 'ar_condicionado', 'trava_eletrica', 'vidro_eletrico', 'som', 'sensor_re', 'camera_re']
 termos_essenciais = ['id_post', 'modelo', 'ano', 'cor', 'portas', 'potencia_motor', 'combustivel',
                      'quilometragem', 'direcao', 'cambio', 'preco']# 9 termos
 termos_descartados = ['Categoria', 'Final de placa', 'Único dono', 'Aceita Trocas', 'Tipo de veículo']
@@ -45,7 +45,7 @@ for link in lista_links:
     lista_atributos = {}
     lista_carros = []
     lista_termos = []
-    lista_opcionais = {}
+    lista_opcionais = []
     item = requests.get(link)
     soup = BeautifulSoup(item.content, 'html.parser')
     id_post = soup.find('div', {'class': 'OLXad-id'}).p.strong.text
@@ -62,8 +62,8 @@ for link in lista_links:
         for li_detalhes in ul_detalhes:
             if (li_detalhes.parent['class'][0] == 'OLXad-features-list'):
                 termo = 'Opcional: '
-                descricao = li_detalhes.text.strip()
-                lista_opcionais[descricao] = 'SIM'
+                descricao = trata_termo(li_detalhes.text.strip())
+                lista_opcionais.append(descricao)
             else:
                 termo = trata_termo(li_detalhes.span.text.strip())
                 descricao = trata_descricao(li_detalhes.span.next_sibling.next_sibling.text.strip())
@@ -77,16 +77,25 @@ for link in lista_links:
                 #print(termo + descricao)
 
 
+        for opcional in termos_opcionais:
+            if(opcional in lista_opcionais):
+                lista_atributos[opcional] = 'SIM'
+            else:
+                lista_atributos[opcional] = 'NAO'
+
         lista_atributos['preco'] = preco
+        num_opcionais = len(termos_opcionais) # +1 preco
         print(lista_termos)
         print(lista_atributos)
         print(lista_opcionais)
-        print("Essenciais: {}, Capturados: {}".format(len(termos_essenciais), len(lista_atributos)))
+        print("Essenciais: {}, Capturados: {}".format(len(termos_essenciais), len(lista_atributos)-num_opcionais))
 
-        if(len(lista_atributos) == len(termos_essenciais)):
+
+        if(len(termos_essenciais) == (len(lista_atributos)-num_opcionais)):
            arquivo_existe = os.path.isfile('base_carros.csv')
            with open('base_carros.csv', mode='a') as csv_file:
-               fieldnames = ['id_post', 'modelo', 'ano', 'cor', 'portas', 'potencia_motor', 'combustivel', 'quilometragem', 'direcao', 'cambio', 'preco']
+               fieldnames = ['id_post', 'modelo', 'ano', 'cor', 'portas', 'potencia_motor', 'combustivel', 'quilometragem', 'direcao', 'cambio',
+                             'air_bag', 'alarme', 'ar_condicionado', 'trava_eletrica', 'vidro_eletrico', 'som', 'sensor_re', 'camera_re', 'preco']
                writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
                if not arquivo_existe:
                    writer.writeheader()
