@@ -70,8 +70,6 @@ for link in lista_links:
 
 
             if(termo in termos_essenciais):
-                if(termo == 'quilometragem'):
-                    descricao = descricao.split('.')[0]
                 lista_termos.append(termo)
                 lista_atributos[termo] = descricao
                 #print(termo + descricao)
